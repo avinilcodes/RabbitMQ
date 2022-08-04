@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -11,6 +14,16 @@ func failOnError(err error, msg string) {
 		log.Panicf("%s: %s", msg, err)
 	}
 }
+
+func deserialize(b []byte) (Message, error) {
+	var msg Message
+	buf := bytes.NewBuffer(b)
+	decoder := json.NewDecoder(buf)
+	err := decoder.Decode(&msg)
+	return msg, err
+}
+
+type Message map[string]interface{}
 
 func main() {
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
@@ -46,7 +59,11 @@ func main() {
 
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
+			msg, err := deserialize(d.Body)
+			if err != nil {
+				fmt.Println("Error in deseralizing msg")
+			}
+			log.Printf("Received a message: %v", msg)
 		}
 	}()
 

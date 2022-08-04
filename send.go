@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -10,6 +13,15 @@ func failOnError(err error, msg string) {
 	if err != nil {
 		log.Panicf("%s: %s", msg, err)
 	}
+}
+
+type Message map[string]interface{}
+
+func serialize(msg Message) ([]byte, error) {
+	var b bytes.Buffer
+	encoder := json.NewEncoder(&b)
+	err := encoder.Encode(msg)
+	return b.Bytes(), err
 }
 
 func main() {
@@ -31,7 +43,11 @@ func main() {
 	)
 	failOnError(err, "Failed to declare a queue")
 
-	body := "Hello World!"
+	body := Message{"Hello world": 1, "RabbitMQ": 2, "GoLang": 3}
+	b, err := serialize(body)
+	if err != nil {
+		fmt.Println("Error while serializing the message")
+	}
 	err = ch.Publish(
 		"",     // exchange
 		q.Name, // routing key
@@ -39,20 +55,8 @@ func main() {
 		false,  // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte(body),
+			Body:        b,
 		})
 	failOnError(err, "Failed to publish a message")
 	log.Printf(" [x] Sent %s\n", body)
-	body1 := "Hello!"
-	err = ch.Publish(
-		"",     // exchange
-		q.Name, // routing key
-		false,  // mandatory
-		false,  // immediate
-		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(body1),
-		})
-	failOnError(err, "Failed to publish a message")
-	log.Printf(" [x] Sent %s\n", body1)
 }
