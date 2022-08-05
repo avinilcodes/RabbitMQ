@@ -32,13 +32,12 @@ func main() {
 	ch, err := conn.Channel()
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
-
 	q, err := ch.QueueDeclare(
 		"hello", // name
-		false,   // durable
+		true,    // durable
 		false,   // delete when unused
 		false,   // exclusive
-		false,   // no-wait
+		true,    // no-wait - other connections cannot modify this queue
 		nil,     // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
@@ -51,8 +50,8 @@ func main() {
 	err = ch.Publish(
 		"",     // exchange
 		q.Name, // routing key
-		false,  // mandatory
-		false,  // immediate
+		true,   // mandatory - Publishing can be undeliverable
+		false,  // immediate -
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        b,

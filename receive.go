@@ -36,10 +36,10 @@ func main() {
 
 	q, err := ch.QueueDeclare(
 		"hello", // name
-		false,   // durable
+		true,    // durable
 		false,   // delete when unused
 		false,   // exclusive
-		false,   // no-wait
+		true,    // no-wait
 		nil,     // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
@@ -48,7 +48,7 @@ func main() {
 		q.Name, // queue
 		"",     // consumer
 		true,   // auto-ack
-		false,  // exclusive
+		true,   // exclusive
 		false,  // no-local
 		false,  // no-wait
 		nil,    // args
